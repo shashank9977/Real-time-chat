@@ -1,0 +1,72 @@
+<!--
+Source file: index.html
+
+---
+Copyright (c) 2012 All Right Reserved, C. A. Cois
+http://www.codehenge.net
+
+THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY 
+KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Node.js is an official trademark of Joyent. This software is not 
+formally related to or endorsed by the official Joyent Node.js open 
+source or commercial project.
+-->
+
+<html>
+<head>
+Socket.io Chat    
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<script>
+        var socket;
+        var firstconnect=true;
+        function connect(){
+            if(firstconnect){
+            socket=io.connect(null);
+            
+            // callbacks for standard socket io server events           
+            socket.on('connect', function(){$('#status').html("Connected to the server");});
+            socket.on('disconnect', function(){$('#status').html("Disconnected to the server");});
+            socket.on('reconnecting', function(nextRetry){
+                $('#status').html("Reconnecting to the server in"+nextRetry+"milliseconds");
+            });
+            socket.on('reconnect_failed', function(){
+                 $('#status').html("Reconnect failed");
+            });
+            
+            //callback for chat event we have defined
+            socket.on('chat', function(client, message){
+               $("#messages").append('<b>Client'+client+'says<b>'+message+'<br>');
+            });
+                firstconnect=false;
+            }
+            else{
+                socket.socket.reconnect();
+            }
+        }
+    
+    function disconnect(){
+        
+        socket.disconnect();
+    }
+    
+    function send(){
+        socket.send($('#message').val());
+    };
+    
+</script>        
+<h1>Socket.io Chat</h1>
+<div><p id="status">waiting for input</p></div>
+<button  id="connect" onClick="connect()">Connect</button>
+<button  id="disconnect" onClick="disconnect()">Disconnect</button>
+
+<br>
+<br>Messages<br><br>
+<div id="messages"></div>    
+</body>
+</html>

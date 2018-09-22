@@ -1,0 +1,155 @@
+<!--
+Source file: index.html
+
+---
+Copyright (c) 2012 All Right Reserved, C. A. Cois
+http://www.codehenge.net
+
+THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY 
+KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Node.js is an official trademark of Joyent. This software is not 
+formally related to or endorsed by the official Joyent Node.js open 
+source or commercial project.
+-->
+
+<html>
+<head>
+Socket.io Chat    
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<script>
+        var socket;
+        var firstconnect=true;
+        var chatroom="";
+        $(document).ready(function(){
+        $("#notification_buttons").hide();
+        });
+
+        function connect(){   
+           // if(firstconnect){
+            socket=io.connect(null);
+         
+            // callbacks for standard socket io server events           
+            socket.on('connect', function(){$('#status').html("Connected to the server");});
+            socket.on('disconnect', function(){$('#status').html("Disconnected to the server");});
+            socket.on('reconnecting', function(nextRetry){
+                $('#status').html("Reconnecting to the server in"+nextRetry+"milliseconds");
+            });
+            socket.on('reconnect_failed', function(){
+                 $('#status').html("Reconnect failed");
+            });
+            
+            //callback for chat event we have defined
+            socket.on('chat', function(client, message){
+                console.log("test");
+                $(document).ready(function(){
+                     $("#messages").append('<b>'+client+' says '+message+'</b><br>');
+                });
+            });
+
+        socket.on('CommLine Established', function(accepted_invite){
+                console.log("test CommLine Established");
+               $("#notification_message").append('<b>'+accepted_invite.Message+'</b><br>');
+            });
+
+            socket.on('chat invite', function(invitation){
+                console.log("private chat test" +invitation.Message);
+                $(document).ready(function(){
+                    $("#notification_message").append('<b>'+invitation.Message+'</b><br>');
+                    $("#notification_buttons").show();
+                    $(document).on("click","#notification_buttons--accept", function(){  
+                        console.log("inside invitation accept");  
+                        chatroom=invitation.Room;
+                        console.log("chatroom name "+chatroom);               
+                        socket.emit('invitation accept',{                          
+                            Room:invitation.Room,
+                            invitee:invitation.Invitee,
+                            Message:socket.user_name+"accepted your invitation."
+                        });                      
+                        $("#notification_buttons").hide();  
+                    });
+                });
+        });
+
+            socket.on('users', function(users){
+                console.log('users enter');
+                $('#users').empty();
+                    users.forEach(function(user){
+                           $('#users').append('<button id='+user.id+' onClick='+'subscribe()'+'>'+user.user_name+'</button><br>');                           
+                 });
+                
+            });
+
+      
+        //socket.emit('connect to user',$(this).text());
+
+              //  firstconnect=false;
+         //   }
+          //  else{
+          //      socket.socket.reconnect();
+          //      select();
+          //  }
+        }
+    
+    function disconnect(){       
+        socket.disconnect();
+    }
+    
+    function send(){
+        console.log("chatroom name "+chatroom);   
+        $("#messages").append('<b>You say '+$('#message').val()+'</b><br>'); 
+        socket.emit('send message',chatroom, $('#message').val());
+        //socket.send($('#message').val());
+    };
+
+    function select(){  
+                 
+        socket.emit('new user',$('#Username').val());
+    };
+function subscribe(){
+ $(document).on("click","button", function(){ // get the click event
+                    //create a room for private chat and join
+                    console.log("user click");
+                    // chatroom='room-1';
+                    // socket.emit('subscribe',{
+                    //     Room: chatroom,
+                    //     User:$(this).text()
+                    //    });
+
+                    });
+}
+
+
+
+    
+    
+</script>        
+<h1>Socket.io Chat</h1>
+<div><p id="status">waiting for input</p></div>
+<button  id="connect" onClick="connect()">Connect</button>
+<button  id="disconnect" onClick="disconnect()">Disconnect</button>
+    <input id="Username"/>
+    <button id="submit" onClick="select()">Save</button>
+
+<input id="message"/>
+<button id="send" onClick="send()">Send Message</button>
+<br>
+<ul id="users"></ul>
+<br>
+
+<div id="notification">
+    <div id="notification_message"></div>
+    <div id="notification_buttons">
+        <button id="notification_buttons--accept">Accept</button>
+        <button id="notification_buttons--decline">Decline</button>
+    </div>
+</div>
+<br>Messages<br><br>
+<div id="messages"></div>    
+</body>
+</html>
